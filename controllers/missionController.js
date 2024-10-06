@@ -80,20 +80,29 @@ exports.getPrestation = async (req, res) => {
   const { prestation_id } = req.body;
 
   try {
-    // Récupérer le worker_id à partir de l'account_id
-    
+    // Récupérer la prestation par son ID
+    const prestationResult = await pool.query('SELECT * FROM Prestation WHERE id = $1', [prestation_id]);
 
-    // Récupérer toutes les prestations associées au worker_id
-    const result = await pool.query('SELECT * FROM Prestation WHERE id = $1', [prestation_id]);
+    if (prestationResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Prestation not found' });
+    }
 
-    // Retourner les prestations trouvées
-    return res.status(200).json({ success: true, prestation: result.rows });
+    // Récupérer les images associées à la prestation (via object_id)
+    const imagesResult = await pool.query('SELECT * FROM images WHERE object_id = $1', [prestation_id]);
+
+    // Retourner la prestation avec les images associées
+    return res.status(200).json({
+      success: true,
+      prestation: prestationResult.rows[0], // Renvoie une seule prestation
+      images: imagesResult.rows,           // Tableau contenant toutes les images associées
+    });
 
   } catch (err) {
     console.error('Server error:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
 
 exports.savePrestationDescription = async (req, res) => {
   const { prestation_id, description } = req.body;
@@ -153,3 +162,38 @@ exports.getAllPrestationSearch = async (req,res) => {
 };
 
 
+exports.getAllMetierNames = async (req, res) => {
+  try {
+    // Récupérer tous les 'nom' dans la table 'metier'
+    const result = await pool.query('SELECT name FROM metier');
+
+    // Retourner les noms trouvés
+    return res.status(200).json({ success: true, metierNames: result.rows });
+
+  } catch (err) {
+    console.error('Server error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getMetierByName = async (req, res) => {
+  try {
+    // Récupérer le 'name' depuis les paramètres de la requête
+    const { name } = req.body;
+    console.log(name)
+    // Requête SQL pour récupérer toutes les colonnes de la table 'metier' où 'name' correspond
+    const result = await pool.query('SELECT * FROM metier WHERE name = $1', [name]);
+
+    // Vérifier si un métier a été trouvé
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Metier not found' });
+    }
+
+    // Retourner le métier trouvé
+    return res.status(200).json({ success: true, metier: result.rows[0] });
+
+  } catch (err) {
+    console.error('Server error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

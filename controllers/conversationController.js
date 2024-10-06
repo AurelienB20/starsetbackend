@@ -159,6 +159,7 @@ exports.getAllWorkerConversation = async (req, res) => {
 
         return {
           id: conversation.id,
+          person2_id :  conversation.person2_id,
           firstname: firstname || 'Inconnu',
           lastname: lastname || 'Inconnu',
           message_text: lastMessage ? lastMessage.message_text : 'Aucun message',
