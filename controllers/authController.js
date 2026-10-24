@@ -72,8 +72,29 @@ exports.register = async (req, res) => {
   }
 };
 
+exports.updateAccountDescription = async (req, res) => {
+  const { accountId, descriptionPopup } = req.body;
+
+  try {
+    
+    // Mettez à jour la description du compte
+    const updateResult = await pool.query(
+      'UPDATE Account SET Description = $1 WHERE Id = $2 RETURNING *',
+      [descriptionPopup, accountId]
+    );
+
+    // Envoyer une réponse avec les nouvelles informations du compte
+    return res.status(200).json({ success: true, account: updateResult.rows[0] });
+
+  } catch (err) {
+    console.error('Server error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 exports.updateAccount = async (req, res) => {
-  const { firstName, lastName, birthDate, address, phoneNumber, accountId } = req.body;
+  const { firstname, lastname, dateofBirth, address, number, accountId, city, postcode,country, pseudo } = req.body;
+  console.log(req.body)
 
   try {
     // Vérifiez si le compte existe
@@ -86,8 +107,8 @@ exports.updateAccount = async (req, res) => {
 
     // Mettez à jour les informations du compte
     const updateResult = await pool.query(
-      'UPDATE Account SET FirstName = $1, LastName = $2, DateOfBirth = $3, Address = $4, Number = $5 WHERE Id = $6 RETURNING *',
-      [firstName, lastName, birthDate, address, phoneNumber, accountId]
+      'UPDATE Account SET FirstName = $1, LastName = $2, DateOfBirth = $3, Address = $4, Number = $5, city = $6, postcode = $7, country = $8, pseudo = $9 WHERE Id = $10 RETURNING *',
+      [firstname, lastname, dateofBirth, address, number, city,postcode, country, pseudo, accountId]
     );
 
     // Envoyer une réponse avec les nouvelles informations de compte
@@ -119,6 +140,44 @@ exports.getWorkerId = async (account_id) => {
 
   } catch (err) {
     console.error('Server error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getAccountById = async (req, res) => {
+  const { accountId } = req.body; // On suppose que l'ID du compte vient des paramètres de la route
+  
+  try {
+    const result = await pool.query('SELECT * FROM Account WHERE id = $1', [accountId]);
+    
+    if (result.rows.length === 0) {
+      // Si aucun compte n'est trouvé, renvoyer un status 404 avec un message
+      return res.status(404).json({ success: false, message: 'Account not found' });
+    }
+
+    // Si un compte est trouvé, renvoyer un status 200 avec l'objet du compte
+    return res.status(200).json({ success: true, account: result.rows[0] });
+  } catch (err) {
+    console.error('Error fetching account:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getProfilePicture = async (req, res) => {
+  const { accountId } = req.body; // Supposons que l'ID du compte soit envoyé dans le body de la requête
+  console.log(accountId)
+  console.log(1)
+  try {
+    // Récupérer l'URL de l'image de profil à partir de l'ID du compte
+    const result = await pool.query('SELECT profile_picture_url FROM Account WHERE Id = $1', [accountId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Account not found' });
+    }
+
+    return res.status(200).json({ success: true, profile_picture_url: result.rows[0].profile_picture_url });
+  } catch (err) {
+    console.error('Error fetching profile picture:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };

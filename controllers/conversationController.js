@@ -154,7 +154,7 @@ exports.getAllWorkerConversation = async (req, res) => {
     const conversationInfos = await Promise.all(
       conversations.map(async (conversation) => {
         const otherPersonId = getOtherPersonId(conversation, worker_id);
-        const { firstname, lastname } = await getOtherPersonDetails(otherPersonId);
+        const { firstname, lastname, profile_picture_url } = await getOtherPersonDetails(otherPersonId);
         const lastMessage = await getLastMessage(conversation.id);
 
         return {
@@ -162,6 +162,7 @@ exports.getAllWorkerConversation = async (req, res) => {
           person2_id :  conversation.person2_id,
           firstname: firstname || 'Inconnu',
           lastname: lastname || 'Inconnu',
+          profile_picture_url : profile_picture_url || '',
           message_text: lastMessage ? lastMessage.message_text : 'Aucun message',
           timestamp: lastMessage ? lastMessage.timestamp : null,
           accepted: conversation.accepted
@@ -205,7 +206,7 @@ const getOtherPersonDetails = async (person_id) => {
   console.log('debut de getOtherPersonDetails')
   try {
     const result = await pool.query(
-      'SELECT firstname, lastname FROM account WHERE id = $1 OR worker = $1',
+      'SELECT firstname, lastname, profile_picture_url FROM account WHERE id = $1 OR worker = $1',
       [person_id]
     );
     console.log(result.rows[0] || {})

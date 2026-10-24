@@ -1,0 +1,6 @@
+# Dependencies: installed with npm install, never versioned
+node_modules/
+
+# Secrets: database and SFTP credentials stay on the server
+.env
+.env.*
